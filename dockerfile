@@ -2,7 +2,7 @@
 FROM python:3.13 AS builder
 
 LABEL org.opencontainers.image.source=https://github.com/zeno
-LABEL org.opencontainers.image.description="Zeno"
+LABEL org.opencontainers.image.description="renex"
 LABEL org.opencontainers.image.licenses=Apache-2.0
 
 WORKDIR /usr/app/server
@@ -17,16 +17,17 @@ RUN apt-get update && \
 RUN pip install uv && \
     uv sync
 
-COPY /zeno /usr/app/server/zeno
+COPY . /usr/app/server/
 
 RUN apt-get autoremove -y build-essential && \
     rm -rf /var/lib/apt/lists/*
 
-FROM python:3.13-slim
+FROM builder
 
 WORKDIR /usr/app/server
 
-COPY --from=builder /usr/app/server/zeno/ /usr/app/server/zeno/
+COPY --from=builder /usr/app/server/src/ /usr/app/server/src/
+COPY --from=builder /usr/app/server/main.py /usr/app/server/main.py
 COPY --from=builder /usr/app/server/.venv /usr/app/server/.venv
 COPY --from=builder /usr/app/server/pyproject.toml /usr/app/server/pyproject.toml
 COPY --from=builder /usr/app/server/uv.lock /usr/app/server/uv.lock
