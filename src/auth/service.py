@@ -20,7 +20,7 @@ from src.auth.schemas import (
 
 settings = get_settings()
 
-oauth2scheme = OAuth2PasswordBearer(tokenUrl="/auth/form-login")
+oauth2scheme = OAuth2PasswordBearer(tokenUrl="/renex/api/auth/form-login")
 
 pwd_context = CryptContext(
     schemes=["argon2"],
@@ -108,7 +108,7 @@ async def authenticate_user(
             password_hash=db_user.password_hxh
         ):
             access_token = create_access_token({"sub": str(db_user.id)})
-            refresh_token = create_refresh_token({"sub": db_user.id})
+            refresh_token = create_refresh_token({"sub": str(db_user.id)})
 
             return LoginResponse(
                 access_token=access_token,
@@ -129,7 +129,10 @@ async def get_current_user(
 
     try:
         user_id = verify_access_token(token)
-
+    
+    except Exception as e:
+        raise e
+    try:
         result = await session.execute(
             select(RenExUser).filter(
                 RenExUser.id == user_id
@@ -140,13 +143,15 @@ async def get_current_user(
         if user:
             user_resp = CurrentUser(
                 email=user.email,
+                id=user.id,
                 is_verified=user.email_verified
             )
             return user_resp
 
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid bearer token"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get user from db with error {e}"
         ) from e
 
 
@@ -165,7 +170,8 @@ def create_access_token(sub: dict):
 
 def verify_access_token(token):
     try:
-        payload = jwt.decode(token, key=settings.JWT_SECRET_KEY)
+        payload = jwt.decode(token, key=settings.JWT_SECRET_KEY,
+                             algorithms=[settings.JWT_ALGORITHM])
         return payload["sub"]
     except jwt.ExpiredSignatureError as e:
         raise HTTPException(
@@ -173,10 +179,7 @@ def verify_access_token(token):
             detail="Access token has expired",
         ) from e
     except jwt.PyJWTError as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Bearer access token is invalid",
-        ) from e
+        raise e
 
 
 def create_refresh_token(sub: dict):
@@ -191,7 +194,7 @@ def create_refresh_token(sub: dict):
     token = jwt.encode(
         payload=payload,
         key=settings.JWT_REFRESH_SECRET,
-        algorithm=settings.JWT_ALGORITHM
+        algorithms=[settings.JWT_ALGORITHM]
     )
     return token
 

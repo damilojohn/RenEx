@@ -87,11 +87,11 @@ async def form_login(
         content=resp.model_dump()
     )
 
+
 @base_router.post("/refresh-token",
                   response_model=LoginResponse)
 def get_verify_refresh_token(
-    request: RefreshRequest,
-    session=Depends(get_db_session)
+    request: RefreshRequest
 ):
     try:
 
