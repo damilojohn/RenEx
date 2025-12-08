@@ -5,8 +5,7 @@ from src.auth.views import base_router as auth_router
 
 
 base_router = APIRouter(
-    prefix="/renex/api",
-    tags=["Heartbeat"]
+    prefix="/renex/api"
 )
 
 
