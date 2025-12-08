@@ -43,8 +43,41 @@ def verify_access_token(token):
         ) from e
 
 
-def create_refresh_token():
-    pass
+def create_refresh_token(sub: dict):
+    payload = sub.copy()
+
+    iat = datetime.now(timezone.utc)
+    to_expire = iat + timedelta(days=settings.JWT_REFRESH_EXP)
+
+    payload.update({"exp": to_expire,
+                    "iat": iat})
+
+    token = jwt.encode(
+        payload=payload,
+        key=settings.JWT_REFRESH_SECRET,
+        algorithm=settings.JWT_ALGORITHM
+    )
+    return token
+
+
+def verify_refresh_token(token: str):
+    try:
+        payload = jwt.decode(
+            token=token,
+            key=settings.JWT_REFRESH_SECRET,
+            algorithm=settings.JWT_ALGORITHM
+        )
+        return payload["sub"]
+    except jwt.ExpiredSignatureError as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Access token has expired",
+        ) from e
+    except jwt.PyJWTError as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Bearer access token is invalid",
+        ) from e
 
 
 def get_password_hash(password: str) -> str:

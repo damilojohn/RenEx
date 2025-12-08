@@ -8,6 +8,8 @@ class UserCreateRequest(BaseModel):
     email: EmailStr
     password: Annotated[str, StringConstraints(
         strip_whitespace=True, max_length=64)]
+    first_name: str
+    last_name: str
 
 
 class UserCreateResponse(BaseModel):
@@ -19,12 +21,17 @@ class UserCreateResponse(BaseModel):
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
-    is_verified: bool
 
 
 class LoginResponse(BaseModel):
     access_token: str
+    # refresh_token: str
+    is_verified: bool = False
+
+
+class RefreshRequest(BaseModel):
     refresh_token: str
+    token_type: str = "bearer"
 
 
 class OauthRequest(BaseModel):
@@ -34,4 +41,4 @@ class OauthRequest(BaseModel):
 class CurrentUser(BaseModel):
     email: EmailStr
     id: UUID
-    is_verified: bool
+    is_verified: bool = False

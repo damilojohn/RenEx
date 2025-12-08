@@ -1,3 +1,9 @@
+from datetime import datetime, timedelta, timezone
+from passlib.context import CryptContext
+from src.config import get_settings
+import jwt
+from fastapi import HTTPException, status
+
 from sqlalchemy import select
 from fastapi import status, HTTPException, Depends
 from fastapi.responses import JSONResponse
@@ -12,15 +18,17 @@ from src.auth.schemas import (
     CurrentUser
 )
 
-from src.auth.utils import (
-    create_access_token,
-    create_refresh_token,
-    verify_access_token,
-    get_password_hash,
-    verify_password_hash
-)
+settings = get_settings()
 
 oauth2scheme = OAuth2PasswordBearer(tokenUrl="/auth/form-login")
+
+pwd_context = CryptContext(
+    schemes=["argon2"],
+    deprecated="auto",
+    argon2__time_cost=4,
+    argon2__memory_cost=65536,
+    argon2__parallelism=4,
+)
 
 
 async def get_user_by_email(
@@ -54,7 +62,9 @@ async def create_user(user: UserCreateRequest,
             password_hash = get_password_hash(user.password)
             new_user = RenExUser(
                 email=user.email,
-                password_hxh=password_hash
+                password_hxh=password_hash,
+                first_name=user.first_name,
+                last_name=user.last_name
             )
 
             session.add(new_user)
@@ -92,14 +102,13 @@ async def authenticate_user(
             detail="User doesn't exist"
         )
     else:
-        password_hash = get_password_hash(user.password)
 
         if verify_password_hash(
-            user_pass=password_hash,
-            db_pass=db_user.password_hxh
+            password=user.password,
+            password_hash=db_user.password_hxh
         ):
-            access_token = create_access_token(db_user)
-            refresh_token = create_refresh_token(db_user)
+            access_token = create_access_token({"sub": str(db_user.id)})
+            refresh_token = create_refresh_token({"sub": db_user.id})
 
             return LoginResponse(
                 access_token=access_token,
@@ -139,4 +148,93 @@ async def get_current_user(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid bearer token"
         ) from e
-    
+
+
+def create_access_token(sub: dict):
+    to_encode = sub.copy()
+    iat = datetime.now(timezone.utc)
+    expire = iat + timedelta(minutes=settings.JWT_EXP)
+    to_encode.update({"exp": expire, "iat": iat})
+    token = jwt.encode(
+        payload=to_encode,
+        key=settings.JWT_SECRET_KEY,
+        algorithm=settings.JWT_ALGORITHM
+    )
+    return token
+
+
+def verify_access_token(token):
+    try:
+        payload = jwt.decode(token, key=settings.JWT_SECRET_KEY)
+        return payload["sub"]
+    except jwt.ExpiredSignatureError as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Access token has expired",
+        ) from e
+    except jwt.PyJWTError as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Bearer access token is invalid",
+        ) from e
+
+
+def create_refresh_token(sub: dict):
+    payload = sub.copy()
+
+    iat = datetime.now(timezone.utc)
+    to_expire = iat + timedelta(days=settings.JWT_REFRESH_EXP)
+
+    payload.update({"exp": to_expire,
+                    "iat": iat})
+
+    token = jwt.encode(
+        payload=payload,
+        key=settings.JWT_REFRESH_SECRET,
+        algorithm=settings.JWT_ALGORITHM
+    )
+    return token
+
+
+def verify_refresh_token(token: str):
+    try:
+        payload = jwt.decode(
+            token=token,
+            key=settings.JWT_REFRESH_SECRET,
+            algorithm=settings.JWT_ALGORITHM
+        )
+        return payload["sub"]
+    except jwt.ExpiredSignatureError as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Access token has expired",
+        ) from e
+    except jwt.PyJWTError as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Bearer access token is invalid",
+        ) from e
+
+
+def get_password_hash(password: str) -> str:
+    return pwd_context.hash(password)
+
+
+def verify_password_hash(password, password_hash) -> str:
+    return pwd_context.verify(password, password_hash)
+
+
+def get_refresh_token(token: str):
+    try:
+        id = verify_refresh_token(token)
+        access_token = create_access_token({"sub": id})
+        refresh_token = create_refresh_token({"sub": id})
+
+        return LoginResponse(
+            access_token=access_token, refresh_token=refresh_token,
+            token_type="bearer"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token credentials"
+        ) from e

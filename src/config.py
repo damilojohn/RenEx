@@ -1,7 +1,7 @@
-from pathlib import Path
 from pydantic import Field
 from pydantic_settings import BaseSettings
 from structlog.stdlib import get_logger
+from functools import lru_cache
 
 LOG = get_logger()
 
@@ -15,8 +15,15 @@ class Settings(BaseSettings):
                                 alias="JWT_SECRET_KEY")
     JWT_ALGORITHM: str = Field(..., 
                                alias="JWT_ALGORITHM")
-    JWT_EXP: str = Field(...,
+    JWT_EXP: int = Field(...,
                          alias="JWT_EXP")
+    
+    JWT_REFRESH_EXP: int = Field(...,
+                                 alias="JWT_REFRESH_EXP")
+    JWT_REFRESH_SECRET: str = Field(
+        ...,
+        alias="JWT_REFRESH_SECRET"
+    )
 
     class Config:
         env_file = ".env"
@@ -32,4 +39,6 @@ class Settings(BaseSettings):
         return self.env == "production"
 
 
-settings = Settings()
+@lru_cache
+def get_settings() -> Settings:
+    return Settings()

@@ -14,7 +14,7 @@ class RenExUser(RecordModel):
     email_verified: Mapped[bool] = mapped_column(
         Boolean(),
         default=False,
-        nullable=False,
+        nullable=True,
         unique=False,
     )
 
