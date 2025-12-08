@@ -194,7 +194,7 @@ def create_refresh_token(sub: dict):
     token = jwt.encode(
         payload=payload,
         key=settings.JWT_REFRESH_SECRET,
-        algorithms=[settings.JWT_ALGORITHM]
+        algorithm=settings.JWT_ALGORITHM
     )
     return token
 
@@ -204,7 +204,7 @@ def verify_refresh_token(token: str):
         payload = jwt.decode(
             token=token,
             key=settings.JWT_REFRESH_SECRET,
-            algorithm=settings.JWT_ALGORITHM
+            algorithms=[settings.JWT_ALGORITHM]
         )
         return payload["sub"]
     except jwt.ExpiredSignatureError as e:
