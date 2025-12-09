@@ -35,12 +35,24 @@ async def get_user_by_email(
         email: str,
         session: AsyncSession
 ):
-    result = await session.execute(
-        select(RenExUser).filter(
-            RenExUser.email == email
+    
+    try:
+        result = await session.execute(
+            select(RenExUser).filter(
+                RenExUser.email == email
+            )
         )
-    )
-    user = result.scalar_one_or_none()
+        user = result.scalar_one_or_none()
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content=f"Failed to find use with error {e}"
+        )
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found"
+        )
     return user
 
 
