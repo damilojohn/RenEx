@@ -46,12 +46,7 @@ async def get_user_by_email(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            content=f"Failed to find use with error {e}"
-        )
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found"
+            content=f"Failed to find user with error {e}"
         )
     return user
 
