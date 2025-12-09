@@ -47,18 +47,19 @@ async def get_user_by_email(
 async def create_user(user: UserCreateRequest,
                       session: AsyncSession):
     # check if user exists
-    try:
-        db_user = await get_user_by_email(
-            user.email,
-            session
-        )
+    db_user = await get_user_by_email(
+        user.email,
+        session
+    )
 
-        if db_user:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="User with email already exists"
-            )
-        else:
+    if db_user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User with email already exists"
+        )
+    else:
+        try:
+
             password_hash = get_password_hash(user.password)
             new_user = RenExUser(
                 email=user.email,
@@ -70,21 +71,26 @@ async def create_user(user: UserCreateRequest,
             session.add(new_user)
             await session.commit()
 
-            await session.refresh(db_user)
+            await session.refresh(new_user)
 
+        except Exception as e:
+            raise HTTPException(
+                status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed creating new user with error {e}"
+            )
+        try:
             access_token = create_access_token({"sub": str(new_user.id)})
             refresh_token = create_refresh_token({"sub": str(new_user.id)})
-
-            return UserCreateResponse(
-                msg="Created User Successfully",
-                access_token=access_token,
-                refresh_token=refresh_token
+        except Exception as e:
+            raise HTTPException(
+                status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed creating user token with error {e}"
             )
 
-    except Exception as e:
-        raise HTTPException(
-            status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed creating new user with error {e}"
+        return UserCreateResponse(
+            msg="Created User Successfully",
+            access_token=access_token,
+            refresh_token=refresh_token
         )
 
 

@@ -42,7 +42,7 @@ class RecordModel(TimeStampedModel):
         Uuid,
         primary_key=True,
         index=True,
-        default=generate_uuid()
+        default=generate_uuid
     )
 
     def __repr__(self) -> str:
