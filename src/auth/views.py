@@ -35,7 +35,7 @@ async def signup(
     if response:
         return JSONResponse(
             status_code=status.HTTP_201_CREATED,
-            detail=response.model_dump()
+            content=response.model_dump()
         )
 
 

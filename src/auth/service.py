@@ -77,8 +77,8 @@ async def create_user(user: UserCreateRequest,
 
             session.add(new_user)
             await session.commit()
+            await session.refresh((new_user))
 
-            await session.refresh(new_user)
 
         except Exception as e:
             raise HTTPException(
