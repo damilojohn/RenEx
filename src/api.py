@@ -2,16 +2,14 @@ from fastapi import APIRouter, status
 from fastapi.responses import JSONResponse
 
 from src.auth.views import base_router as auth_router
+from src.listings.views import base_router as listings_router
+from src.swaps.views import base_router as swaps_router
 
 
-base_router = APIRouter(
-    prefix="/renex/api"
-)
+base_router = APIRouter(prefix="/renex/api")
 
 
-@base_router.post(
-    "/heartbeat"
-)
+@base_router.post("/heartbeat")
 def heartbeat():
     """Base endpoint for service. Can be used for app health check
 
@@ -30,9 +28,11 @@ def heartbeat():
             "version": "0.1.0",
             "data": {
                 "verified": True,
-                }
-            })
+            },
+        },
+    )
 
 
-base_router.include_router(auth_router,
-                           tags=["Auth"])
+base_router.include_router(auth_router, tags=["Auth"])
+base_router.include_router(listings_router, tags=["Listings"])
+base_router.include_router(swaps_router, tags=["Swaps"])

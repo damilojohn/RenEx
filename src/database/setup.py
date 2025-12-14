@@ -1,10 +1,12 @@
 from collections.abc import AsyncGenerator
 
 from fastapi import Request
-from sqlalchemy.ext.asyncio import (create_async_engine,
-                                    AsyncEngine,
-                                    async_sessionmaker,
-                                    AsyncSession)
+from sqlalchemy.ext.asyncio import (
+    create_async_engine,
+    AsyncEngine,
+    async_sessionmaker,
+    AsyncSession,
+)
 from src.config import LOG
 
 
@@ -20,16 +22,10 @@ async def _create_engine(conn_string: str):
 
 
 async def create_async_session(engine: AsyncEngine):
-    return async_sessionmaker(
-        autocommit=False,
-        autoflush=True,
-        bind=engine
-    )
+    return async_sessionmaker(autocommit=False, autoflush=True, bind=engine)
 
 
-async def get_db_session(
-        request: Request
-) -> AsyncGenerator[AsyncSession]:
+async def get_db_session(request: Request) -> AsyncGenerator[AsyncSession]:
     sessionmaker = request.app.state.session_maker
     async with sessionmaker() as session:
         try:
@@ -38,4 +34,3 @@ async def get_db_session(
         except Exception as e:
             LOG.error(f"db session failed with exception {e}")
             raise e
-

@@ -8,6 +8,7 @@ from src.utils import get_current_time, generate_uuid
 
 class Base(DeclarativeBase):
     """Base class for all SQLAlchemy models"""
+
     __repr_attrs__ = []
     __repr_max_length__ = 15
 
@@ -22,15 +23,12 @@ class TimeStampedModel(Base):
     )
 
     updated_at: Mapped[datetime] = mapped_column(
-        TIMESTAMP(timezone=True),
-        nullable=True,
-        default=get_current_time,
-        index=True
+        TIMESTAMP(timezone=True), nullable=True, default=get_current_time, index=True
     )
 
     def set_modified_at(self):
         self.modified_at = get_current_time()
-    
+
     def set_deleted_at(self):
         self.deleted_at = get_current_time()
 
@@ -39,10 +37,7 @@ class RecordModel(TimeStampedModel):
     __abstract__ = True
 
     id: Mapped[UUID] = mapped_column(
-        Uuid,
-        primary_key=True,
-        index=True,
-        default=generate_uuid
+        Uuid, primary_key=True, index=True, default=generate_uuid
     )
 
     def __repr__(self) -> str:
@@ -51,7 +46,7 @@ class RecordModel(TimeStampedModel):
             id_value = insp.identity[0]
             return f"{self.__class__.__name__}(id={id_value!r})"
         return f"{self.__class__.__name__}(id=None)"
-    
+
     def __hash__(self) -> int:
         self.id.int
 

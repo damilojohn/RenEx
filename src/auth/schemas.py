@@ -26,7 +26,7 @@ class LoginRequest(BaseModel):
 class LoginResponse(BaseModel):
     token_type: str = "bearer"
     access_token: str
-    # refresh_token: str
+    refresh_token: str
     is_verified: bool = False
 
 

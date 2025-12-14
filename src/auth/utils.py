@@ -3,6 +3,7 @@ from passlib.context import CryptContext
 from src.config import get_settings
 import jwt
 from fastapi import HTTPException, status
+
 settings = get_settings()
 
 pwd_context = CryptContext(
@@ -20,9 +21,7 @@ def create_access_token(sub: dict):
     expire = iat + timedelta(minutes=settings.JWT_EXP)
     to_encode.update({"exp": expire, "iat": iat})
     token = jwt.encode(
-        payload=to_encode,
-        key=settings.JWT_SECRET_KEY,
-        algorithm=settings.JWT_ALGORITHM
+        payload=to_encode, key=settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM
     )
     return token
 
@@ -49,13 +48,12 @@ def create_refresh_token(sub: dict):
     iat = datetime.now(timezone.utc)
     to_expire = iat + timedelta(days=settings.JWT_REFRESH_EXP)
 
-    payload.update({"exp": to_expire,
-                    "iat": iat})
+    payload.update({"exp": to_expire, "iat": iat})
 
     token = jwt.encode(
         payload=payload,
         key=settings.JWT_REFRESH_SECRET,
-        algorithm=settings.JWT_ALGORITHM
+        algorithm=settings.JWT_ALGORITHM,
     )
     return token
 
@@ -65,7 +63,7 @@ def verify_refresh_token(token: str):
         payload = jwt.decode(
             token=token,
             key=settings.JWT_REFRESH_SECRET,
-            algorithm=settings.JWT_ALGORITHM
+            algorithm=settings.JWT_ALGORITHM,
         )
         return payload["sub"]
     except jwt.ExpiredSignatureError as e:
