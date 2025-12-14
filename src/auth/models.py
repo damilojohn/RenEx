@@ -7,9 +7,10 @@ from src.database import RecordModel
 class RenExUser(RecordModel):
     __tablename__ = "users"
 
-    email: Mapped[str] = mapped_column(
-        String(320), nullable=False, unique=True, index=True
-    )
+    email: Mapped[str] = mapped_column(String(320),
+                                       nullable=False,
+                                       unique=True,
+                                       index=True)
     email_verified: Mapped[bool] = mapped_column(
         Boolean(),
         default=False,
