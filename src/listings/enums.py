@@ -1,11 +1,11 @@
 from enum import Enum
 
 
-class ListingType(Enum, str):
+class ListingType(str, Enum):
     demand: str = "demand"
     supply: str = "supply"
 
 
-class EnergyType(Enum, str):
+class EnergyType(str, Enum):
     solar: str = "solar"
     wind: str = "wind"

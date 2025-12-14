@@ -22,7 +22,7 @@ from src.listings.service import (
 from typing import Optional
 
 
-base_router = APIRouter(prefix="/listings", tags=["Listings", "Feeds"])
+base_router = APIRouter(prefix="/listings", tags=["Listings"])
 
 
 @base_router.post(
