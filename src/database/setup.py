@@ -33,4 +33,5 @@ async def get_db_session(request: Request) -> AsyncGenerator[AsyncSession]:
             await session.commit()
         except Exception as e:
             LOG.error(f"db session failed with exception {e}")
+            await session.rollback()
             raise e

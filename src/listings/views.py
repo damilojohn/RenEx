@@ -3,6 +3,7 @@ from fastapi.responses import JSONResponse
 from src.database.setup import get_db_session, AsyncSession
 from src.auth.service import get_current_user
 from src.auth.schemas import CurrentUser
+from src.utils import CustomJSONResponse
 from src.listings.schemas import (
     ListingCreateRequest,
     ListingUpdateRequest,
@@ -37,7 +38,7 @@ async def create_new_listing(
     result = await create_listing(
         listing_data=listing_data, user_id=user.id, session=session
     )
-    return JSONResponse(
+    return CustomJSONResponse(
         status_code=status.HTTP_201_CREATED, content=result.model_dump()
     )
 
@@ -66,7 +67,8 @@ async def get_feed(
         page=page,
         page_size=page_size,
     )
-    return JSONResponse(status_code=status.HTTP_200_OK, content=result.model_dump())
+    return CustomJSONResponse(status_code=status.HTTP_200_OK,
+                              content=result.model_dump())
 
 
 @base_router.get("/me", response_model=list[ListingResponse])
@@ -87,7 +89,7 @@ async def get_my_listings(
         limit=limit,
         offset=offset,
     )
-    return JSONResponse(
+    return CustomJSONResponse(
         status_code=status.HTTP_200_OK,
         content=[listing.model_dump() for listing in result],
     )
@@ -111,7 +113,7 @@ async def get_listing(
         )
 
     result = await get_listing_by_id(listing_id=listing_uuid, session=session)
-    return JSONResponse(status_code=status.HTTP_200_OK, content=result.model_dump())
+    return CustomJSONResponse(status_code=status.HTTP_200_OK, content=result.model_dump())
 
 
 @base_router.put("/{listing_id}", response_model=ListingResponse)
@@ -138,7 +140,7 @@ async def update_my_listing(
         update_data=update_data,
         session=session,
     )
-    return JSONResponse(status_code=status.HTTP_200_OK, content=result.model_dump())
+    return CustomJSONResponse(status_code=status.HTTP_200_OK, content=result.model_dump())
 
 
 @base_router.delete("/{listing_id}", status_code=status.HTTP_200_OK)
@@ -161,7 +163,7 @@ async def delete_my_listing(
     result = await delete_listing(
         listing_id=listing_uuid, user_id=user.id, session=session
     )
-    return JSONResponse(status_code=status.HTTP_200_OK, content=result)
+    return CustomJSONResponse(status_code=status.HTTP_200_OK, content=result)
 
 
 @base_router.get("/{listing_id}/matches", response_model=list[ListingResponse])
@@ -182,7 +184,7 @@ async def get_matching_listings_for_listing(
         )
 
     result = await get_matching_listings(user_listing_id=listing_uuid, session=session)
-    return JSONResponse(
+    return CustomJSONResponse(
         status_code=status.HTTP_200_OK,
         content=[listing.model_dump() for listing in result],
     )
